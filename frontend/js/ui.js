@@ -308,6 +308,30 @@ function initLogoutButton() {
 }
 
 /**
+ * Initialiser le toggle de thème
+ */
+function initThemeToggle() {
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+    
+    // Charger le thème sauvegardé
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    themeIcon.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+    
+    if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            themeIcon.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+        });
+    }
+}
+
+/**
  * Initialiser le formulaire de connexion
  */
 function initLoginForm() {
@@ -321,8 +345,13 @@ function initLoginForm() {
             const errorDiv = document.getElementById('loginError');
             
             try {
-                await auth.login({ login, password });
-                window.location.reload();
+                const result = await auth.login(login, password);
+                if (result.success) {
+                    window.location.reload();
+                } else {
+                    errorDiv.textContent = result.message || 'Erreur de connexion';
+                    errorDiv.classList.remove('hidden');
+                }
             } catch (error) {
                 errorDiv.textContent = error.message || 'Erreur de connexion';
                 errorDiv.classList.remove('hidden');

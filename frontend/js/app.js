@@ -46,6 +46,7 @@ async function initApp() {
             initNavigation();
             initModal();
             initLogoutButton();
+            initThemeToggle();
             initMissionsPage();
             initEquipmentPage();
             initVehiclesPage();
