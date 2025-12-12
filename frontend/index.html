@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>U2I - Unité des Incidents Inhabituels</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+<body>
+    <!-- Écran de chargement -->
+    <div id="loading" class="loading-screen">
+        <div class="loading-content">
+            <h1>U2I</h1>
+            <div class="loading-spinner"></div>
+            <p>Chargement...</p>
+        </div>
+    </div>
+
+    <!-- Page de connexion -->
+    <div id="loginPage" class="page hidden">
+        <div class="login-container">
+            <div class="login-box">
+                <div class="login-header">
+                    <h1>U2I</h1>
+                    <p>Unité des Incidents Inhabituels</p>
+                </div>
+                <form id="loginForm" class="login-form">
+                    <div class="form-group">
+                        <label for="login">Identifiant</label>
+                        <input type="text" id="login" name="login" required placeholder="Email ou nom d'utilisateur">
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Mot de passe</label>
+                        <input type="password" id="password" name="password" required placeholder="••••••••">
+                    </div>
+                    <div id="loginError" class="error-message hidden"></div>
+                    <button type="submit" class="btn btn-primary btn-block">Se connecter</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application principale -->
+    <div id="app" class="app hidden">
+        <!-- Navigation -->
+        <nav class="navbar">
+            <div class="navbar-brand">
+                <h1>U2I</h1>
+            </div>
+            <div class="navbar-menu">
+                <a href="#" data-page="dashboard" class="nav-link active">
+                    <span class="icon">📊</span> Tableau de bord
+                </a>
+                <a href="#" data-page="missions" class="nav-link">
+                    <span class="icon">🎯</span> Missions
+                </a>
+                <a href="#" data-page="map" class="nav-link">
+                    <span class="icon">🗺️</span> Carte
+                </a>
+                <a href="#" data-page="equipment" class="nav-link">
+                    <span class="icon">🛠️</span> Équipements
+                </a>
+                <a href="#" data-page="vehicles" class="nav-link">
+                    <span class="icon">🚁</span> Véhicules
+                </a>
+                <a href="#" data-page="users" class="nav-link admin-only">
+                    <span class="icon">👥</span> Utilisateurs
+                </a>
+                <a href="#" data-page="roles" class="nav-link admin-only">
+                    <span class="icon">🔐</span> Rôles & Permissions
+                </a>
+                <a href="#" data-page="settings" class="nav-link admin-only">
+                    <span class="icon">⚙️</span> Paramètres
+                </a>
+            </div>
+            <div class="navbar-user">
+                <div class="user-info">
+                    <span id="userName" class="user-name"></span>
+                    <span id="userRole" class="user-role"></span>
+                </div>
+                <button id="logoutBtn" class="btn btn-secondary btn-sm">Déconnexion</button>
+            </div>
+        </nav>
+
+        <!-- Contenu principal -->
+        <main class="main-content">
+            <!-- Tableau de bord -->
+            <div id="dashboardPage" class="content-page active">
+                <h2>Tableau de bord</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Missions actives</h3>
+                        <p class="stat-value" id="activeMissions">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Équipements disponibles</h3>
+                        <p class="stat-value" id="availableEquipment">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Véhicules opérationnels</h3>
+                        <p class="stat-value" id="operationalVehicles">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Agents actifs</h3>
+                        <p class="stat-value" id="activeAgents">0</p>
+                    </div>
+                </div>
+                <div class="dashboard-sections">
+                    <section class="dashboard-section">
+                        <h3>Missions récentes</h3>
+                        <div id="recentMissions" class="data-list"></div>
+                    </section>
+                    <section class="dashboard-section">
+                        <h3>Mes missions</h3>
+                        <div id="myMissions" class="data-list"></div>
+                    </section>
+                </div>
+            </div>
+
+            <!-- Missions -->
+            <div id="missionsPage" class="content-page">
+                <div class="page-header">
+                    <h2>Gestion des missions</h2>
+                    <button id="addMissionBtn" class="btn btn-primary mission-creator-only">
+                        <span class="icon">+</span> Nouvelle mission
+                    </button>
+                </div>
+                <div class="filters">
+                    <input type="text" id="missionSearch" placeholder="Rechercher..." class="search-input">
+                    <select id="missionStatusFilter" class="filter-select">
+                        <option value="">Tous les statuts</option>
+                        <option value="brouillon">Brouillon</option>
+                        <option value="planifiee">Planifiée</option>
+                        <option value="en_cours">En cours</option>
+                        <option value="terminee">Terminée</option>
+                        <option value="annulee">Annulée</option>
+                    </select>
+                    <select id="missionPriorityFilter" class="filter-select">
+                        <option value="">Toutes les priorités</option>
+                        <option value="basse">Basse</option>
+                        <option value="normale">Normale</option>
+                        <option value="haute">Haute</option>
+                        <option value="critique">Critique</option>
+                    </select>
+                </div>
+                <div id="missionsList" class="data-grid"></div>
+            </div>
+
+            <!-- Carte -->
+            <div id="mapPage" class="content-page">
+                <h2>Carte des missions</h2>
+                <div id="map" class="map-container"></div>
+            </div>
+
+            <!-- Équipements -->
+            <div id="equipmentPage" class="content-page">
+                <div class="page-header">
+                    <h2>Gestion des équipements</h2>
+                    <button id="addEquipmentBtn" class="btn btn-primary equipment-manager-only">
+                        <span class="icon">+</span> Nouvel équipement
+                    </button>
+                </div>
+                <div class="filters">
+                    <input type="text" id="equipmentSearch" placeholder="Rechercher..." class="search-input">
+                    <select id="equipmentCategoryFilter" class="filter-select">
+                        <option value="">Toutes les catégories</option>
+                        <option value="arme">Arme</option>
+                        <option value="protection">Protection</option>
+                        <option value="communication">Communication</option>
+                        <option value="medical">Médical</option>
+                        <option value="surveillance">Surveillance</option>
+                        <option value="autre">Autre</option>
+                    </select>
+                </div>
+                <div id="equipmentList" class="data-grid"></div>
+            </div>
+
+            <!-- Véhicules -->
+            <div id="vehiclesPage" class="content-page">
+                <div class="page-header">
+                    <h2>Gestion des véhicules</h2>
+                    <button id="addVehicleBtn" class="btn btn-primary vehicle-manager-only">
+                        <span class="icon">+</span> Nouveau véhicule
+                    </button>
+                </div>
+                <div class="filters">
+                    <input type="text" id="vehicleSearch" placeholder="Rechercher..." class="search-input">
+                    <select id="vehicleTypeFilter" class="filter-select">
+                        <option value="">Tous les types</option>
+                        <option value="terrestre">Terrestre</option>
+                        <option value="aerien">Aérien</option>
+                        <option value="maritime">Maritime</option>
+                        <option value="amphibie">Amphibie</option>
+                        <option value="autre">Autre</option>
+                    </select>
+                </div>
+                <div id="vehiclesList" class="data-grid"></div>
+            </div>
+
+            <!-- Utilisateurs -->
+            <div id="usersPage" class="content-page admin-only">
+                <div class="page-header">
+                    <h2>Gestion des utilisateurs</h2>
+                    <button id="addUserBtn" class="btn btn-primary">
+                        <span class="icon">+</span> Nouvel utilisateur
+                    </button>
+                </div>
+                <div class="filters">
+                    <input type="text" id="userSearch" placeholder="Rechercher..." class="search-input">
+                    <select id="userRoleFilter" class="filter-select">
+                        <option value="">Tous les rôles</option>
+                    </select>
+                </div>
+                <div id="usersList" class="data-table"></div>
+            </div>
+
+            <!-- Rôles et Permissions -->
+            <div id="rolesPage" class="content-page admin-only">
+                <div class="page-header">
+                    <h2>Rôles et Permissions</h2>
+                    <button id="addRoleBtn" class="btn btn-primary">
+                        <span class="icon">+</span> Nouveau rôle
+                    </button>
+                </div>
+                <div class="roles-permissions-container">
+                    <div class="roles-section">
+                        <h3>Rôles</h3>
+                        <div id="rolesList"></div>
+                    </div>
+                    <div class="permissions-section">
+                        <h3>Permissions</h3>
+                        <button id="addPermissionBtn" class="btn btn-secondary btn-sm">
+                            <span class="icon">+</span> Nouvelle permission
+                        </button>
+                        <div id="permissionsList"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Paramètres -->
+            <div id="settingsPage" class="content-page admin-only">
+                <div class="page-header">
+                    <h2>Paramètres système</h2>
+                    <button id="addSettingBtn" class="btn btn-primary">
+                        <span class="icon">+</span> Nouveau paramètre
+                    </button>
+                </div>
+                <div id="settingsList" class="settings-grid"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal générique -->
+    <div id="modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/missions.js"></script>
+    <script src="js/map.js"></script>
+    <script src="js/equipment.js"></script>
+    <script src="js/vehicles.js"></script>
+    <script src="js/users.js"></script>
+    <script src="js/roles.js"></script>
+    <script src="js/settings.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
